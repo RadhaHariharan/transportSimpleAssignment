@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, WritableSignal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-type Trip = { start: string, end: string, level: number, showArrow: boolean }
+type Trip = { start: string, end: string, level: number, showArrow: boolean, x: number, y: number }
 
 @Component({
   selector: 'app-root',
@@ -10,93 +10,16 @@ type Trip = { start: string, end: string, level: number, showArrow: boolean }
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
-  trips: WritableSignal<Trip[]> = signal<Trip[]>([
-    {
-      "start": "Banglore",
-      "end": "Chennai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Madurai",
-      "end": "Chennai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Chennai",
-      "end": "Madurai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Banglore",
-      "end": "Ooty",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Banglore",
-      "end": "Chennai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Madurai",
-      "end": "Chennai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Chennai",
-      "end": "Madurai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Banglore",
-      "end": "Ooty",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Banglore",
-      "end": "Chennai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Madurai",
-      "end": "Chennai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Chennai",
-      "end": "Madurai",
-      "level": 1,
-      "showArrow": true
-    },
-    {
-      "start": "Banglore",
-      "end": "Ooty",
-      "level": 1,
-      "showArrow": true
-    },
-  ]);
+  trips: WritableSignal<Trip[]> = signal<Trip[]>([]);
   tripForm!: FormGroup;
 
   // Gap between points
   xGap = 100;
   startX = 30;
-  y1 = 150; // y-coordinate for level 1
-  y2 = 80; // y-coordinate for level 2
+  y1 = 110; // y-coordinate for level 1
+  y2 = 40; // y-coordinate for level 2
 
-  pointCoordinates: { x: number; y: number }[] = [];
-
-  constructor(private fb: FormBuilder) { 
-    this.generateCoordinates();
-  }
+  constructor(private fb: FormBuilder) { }
 
   ngOnInit(): void {
     this.tripForm = this.fb.group({
@@ -120,69 +43,59 @@ export class AppComponent implements OnInit {
       if (updatedTrips.length > 1) {
         updatedTrips.forEach((trip, index) => {
           trip.showArrow = false;
-          trip.level = 1; // Default level is 1
+          trip.level = 1;
 
-          // Check for consecutive trips
           const nextTrip = updatedTrips[index + 1];
           const prevTrip = updatedTrips[index - 1];
 
-          // Case 1: Check for continued trip (same drop and pick-up locations)
-          if (trip.end === nextTrip?.start) {
-            trip.level = 1; // Continued trip stays on level 1
-          }
-          // Case 2: If trips are not continued and the locations are different
-          else {
-            trip.showArrow = true; // Show arrow if it's not a continued trip
-            trip.level = 1; // Ensure it's still on level 1 (arrow implies the line isn't straight)
+          if (trip.end.toLowerCase() === nextTrip?.start?.toLowerCase()) {
+            trip.level = 1;
+          } else {
+            trip.showArrow = true;
+            trip.level = 1;
           }
 
-          // Case 3: If consecutive trips have the same pickup and drop locations
-          if ((trip.start === nextTrip?.start && trip.end === nextTrip?.end) || (trip.start === prevTrip?.start && trip.end === prevTrip?.end)) {
-            trip.level = 2; // Set to level 2 for same start and end locations
+          if ((trip.start.toLowerCase() === nextTrip?.start?.toLowerCase() && trip.end.toLowerCase() === nextTrip?.end?.toLowerCase()) || (trip.start.toLowerCase() === prevTrip?.start?.toLowerCase() && trip.end.toLowerCase() === prevTrip?.end?.toLowerCase())) {
+            trip.level = 2;
             trip.showArrow = false;
           }
         });
       }
 
+      updatedTrips.forEach((trip, index) => {
+        const x = this.startX + index * this.xGap;
+        const y = trip.level === 1 ? this.y1 : this.y2;
+        trip.x = x;
+        trip.y = y;
+
+        if (trip.showArrow) {
+          const nextTrip = updatedTrips[index + 1];
+          if (nextTrip?.level === 2) {
+            trip.showArrow = false;
+          }
+        }
+      })
+
       return updatedTrips;
     });
 
-    console.log(this.trips())
-
-    this.generateCoordinates();
     this.tripForm.reset();
-  }
-
-  generateCoordinates(): void {
-    this.pointCoordinates = [];
-    this.trips().forEach((point, index) => {
-      const x = this.startX + index * this.xGap;
-      const y = point.level === 1 ? this.y1 : this.y2;
-
-      this.pointCoordinates.push({ x, y });
-    });
-
-    console.log(this.pointCoordinates)
   }
 
   getPointLabel(point: Trip): string {
     return `${point.start.substring(0, 3)}-${point.end.substring(0, 3)}`;
   }
 
-  // Get path between points, deciding between curved or straight lines
   getPathBetweenPoints(index: number): string {
-    if (index >= this.pointCoordinates.length - 1) return '';
+    if (index >= this.trips().length - 1) return '';
 
-    const startPoint = this.pointCoordinates[index];
-    const endPoint = this.pointCoordinates[index + 1];
+    const startPoint = this.trips()[index];
+    const endPoint = this.trips()[index + 1];
 
-    // If both points are at the same level, use a straight line
     if (this.trips()[index].level === this.trips()[index + 1].level) {
-      return `M ${startPoint.x + 10} ${startPoint.y} L ${endPoint.x - 10} ${endPoint.y
-        }`;
+      return `M ${startPoint.x + 10} ${startPoint.y} L ${endPoint.x - 10} ${endPoint.y}`;
     }
 
-    // Otherwise use a curved line
     const controlPoint1X = startPoint.x + this.xGap * 0.25;
     const controlPoint2X = endPoint.x - this.xGap * 0.25;
 
@@ -202,5 +115,11 @@ export class AppComponent implements OnInit {
   getArrowMarkerId(index: number): string {
     const colorNames = ['red', 'green', 'purple', 'orange', 'teal'];
     return `${colorNames[index % colorNames.length]}Arrowhead`;
+  }
+
+  removeTrip(index: number) {
+    this.trips.update(trips => {
+      return trips.filter((_, i) => i !== index);
+    });
   }
 }
