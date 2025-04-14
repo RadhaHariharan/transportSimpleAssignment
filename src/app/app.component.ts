@@ -39,7 +39,16 @@ export class AppComponent implements OnInit {
 
     this.trips.update(trips => {
       const updatedTrips: Trip[] = [...trips, this.tripForm.value];
+      return updatedTrips;
+    });
 
+    this.updateTripValues();
+    this.tripForm.reset();
+  }
+
+  updateTripValues() {
+    this.trips.update(trips => {
+      const updatedTrips = [...trips];
       if (updatedTrips.length > 1) {
         updatedTrips.forEach((trip, index) => {
           trip.showArrow = false;
@@ -75,11 +84,15 @@ export class AppComponent implements OnInit {
           }
         }
       })
-
       return updatedTrips;
-    });
+    })
+  }
 
-    this.tripForm.reset();
+  removeTrip(index: number) {
+    this.trips.update(trips => {
+      return trips.filter((_, i) => i !== index);
+    });
+    this.updateTripValues();
   }
 
   getPointLabel(point: Trip): string {
@@ -115,11 +128,5 @@ export class AppComponent implements OnInit {
   getArrowMarkerId(index: number): string {
     const colorNames = ['red', 'green', 'purple', 'orange', 'teal'];
     return `${colorNames[index % colorNames.length]}Arrowhead`;
-  }
-
-  removeTrip(index: number) {
-    this.trips.update(trips => {
-      return trips.filter((_, i) => i !== index);
-    });
   }
 }
