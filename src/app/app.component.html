@@ -1,0 +1,102 @@
+<div class="flex flex-col items-center p-4 max-w-4xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">Trip Route Visualization</h1>
+
+  <div class="w-full bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex flex-col md:flex-row gap-4 mb-4" [formGroup]="tripForm">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="start">Start Point</label>
+        <input type="text" class="w-full p-2 border border-gray-300 rounded ng-invalid-input:is-invalid"
+          placeholder="e.g. Bangalore" id="start" formControlName="start" />
+        @if (tripForm.get('start')?.invalid && tripForm.get('start')?.touched) {
+        <div class="text-red-500 text-sm mt-1">
+          Start point is required & Length should be greater than 3
+        </div>
+        }
+      </div>
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="end">End Point</label>
+        <input type="text" class="w-full p-2 border border-gray-300 rounded ng-invalid-input:is-invalid"
+          placeholder="e.g. Hyderabad" id="end" formControlName="end" />
+        @if (tripForm.get('end')?.invalid && tripForm.get('end')?.touched) {
+        <div class="text-red-500 text-sm mt-1">
+          End point is required & Length should be greater than 3
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="flex justify-center">
+      <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" (click)="addTrip()">
+        Add Trip
+      </button>
+    </div>
+
+    <div class="mt-6">
+      <h2 class="text-lg font-semibold mb-2">Trip List</h2>
+      @if (!trips().length) {
+      <p class="text-gray-500">No trips added yet</p>
+      } @else {
+      @for (trip of trips(); track $index) {
+      <ul class="space-y-2">
+        <li class="flex justify-between items-center bg-gray-50 p-2 rounded">
+          <span>{{$index + 1}}. {{trip.start}} to {{trip.end}}</span>
+          <button class="text-red-500 hover:text-red-700 w-6 h-6">
+            <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M16 6V5.2C16 4.0799 16 3.51984 15.782 3.09202C15.5903 2.71569 15.2843 2.40973 14.908 2.21799C14.4802 2 13.9201 2 12.8 2H11.2C10.0799 2 9.51984 2 9.09202 2.21799C8.71569 2.40973 8.40973 2.71569 8.21799 3.09202C8 3.51984 8 4.0799 8 5.2V6M10 11.5V16.5M14 11.5V16.5M3 6H21M19 6V17.2C19 18.8802 19 19.7202 18.673 20.362C18.3854 20.9265 17.9265 21.3854 17.362 21.673C16.7202 22 15.8802 22 14.2 22H9.8C8.11984 22 7.27976 22 6.63803 21.673C6.07354 21.3854 5.6146 20.9265 5.32698 20.362C5 19.7202 5 18.8802 5 17.2V6"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+      }
+      }
+    </div>
+  </div>
+
+  <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+    <!-- Define arrowhead markers -->
+    <defs>
+      <marker id="redArrowhead" markerWidth="6" markerHeight="4.2" refX="5" refY="2.1" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 6 2.1, 0 4.2" fill="#e74c3c" />
+      </marker>        
+
+      <marker id="greenArrowhead" markerWidth="6" markerHeight="4.2" refX="5" refY="2.1" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 6 2.1, 0 4.2" fill="#2ecc71" />
+      </marker>
+      
+      <marker id="purpleArrowhead" markerWidth="6" markerHeight="4.2" refX="5" refY="2.1" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 6 2.1, 0 4.2" fill="#9b59b6" />
+      </marker>
+      
+      <marker id="orangeArrowhead" markerWidth="6" markerHeight="4.2" refX="5" refY="2.1" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 6 2.1, 0 4.2" fill="#f39c12" />
+      </marker>
+      
+      <marker id="tealArrowhead" markerWidth="6" markerHeight="4.2" refX="5" refY="2.1" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 6 2.1, 0 4.2" fill="#1abc9c" />
+      </marker>        
+    </defs>
+
+    <!-- Draw points -->
+    @for (trip of trips(); track $index) {
+    <ng-container>
+      <circle [attr.cx]="pointCoordinates[$index].x" [attr.cy]="pointCoordinates[$index].y" r="8" fill="#3498db" />
+      <text [attr.x]="pointCoordinates[$index].x"
+        [attr.y]="trip.level === 1 ? pointCoordinates[$index].y + 30 : pointCoordinates[$index].y - 20"
+        font-family="Arial" font-size="14" text-anchor="middle">
+        {{ getPointLabel(trip) }}
+      </text>
+    </ng-container>
+    }
+
+    <!-- Draw connecting paths -->
+    @for (trip of trips(); track $index) {
+    @if($index < trips().length - 1) { 
+      <path [attr.d]="getPathBetweenPoints($index)" [attr.stroke]="getLineColor($index)"
+      stroke-width="2" fill="none"
+      [attr.marker-end]="trip.showArrow ? 'url(#' + getArrowMarkerId($index) + ')' : ''" />
+    }
+    }
+  </svg>
+</div>
