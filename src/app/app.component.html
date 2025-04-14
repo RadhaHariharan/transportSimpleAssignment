@@ -9,7 +9,7 @@
           placeholder="e.g. Bangalore" id="start" formControlName="start" />
         @if (tripForm.get('start')?.invalid && tripForm.get('start')?.touched) {
         <div class="text-red-500 text-sm mt-1">
-          Start point is required & Length should be greater than 3
+          Start point is required, Length should be greater than 3 and should not contain only spaces
         </div>
         }
       </div>
@@ -19,7 +19,7 @@
           placeholder="e.g. Hyderabad" id="end" formControlName="end" />
         @if (tripForm.get('end')?.invalid && tripForm.get('end')?.touched) {
         <div class="text-red-500 text-sm mt-1">
-          End point is required & Length should be greater than 3
+          End point is required & Length should be greater than 3 and should not contain only spaces
         </div>
         }
       </div>

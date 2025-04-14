@@ -23,9 +23,8 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.tripForm = this.fb.group({
-      start: ["", [Validators.required, Validators.minLength(3)]],
-      end: ["", [Validators.required, Validators.minLength(3)]],
-      level: [1]
+      start: ["", [Validators.required, Validators.minLength(3), Validators.pattern(/^(?!\s)(.*\S)?$/)]],
+      end: ["", [Validators.required, Validators.minLength(3), Validators.pattern(/^(?!\s)(.*\S)?$/)]],
     })
   }
 
